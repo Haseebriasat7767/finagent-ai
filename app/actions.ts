@@ -42,6 +42,9 @@ export async function createCompanyAction(_prev: ActionState, formData: FormData
     const supabase = await createClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) return { error: "Please sign in again before creating your company." };
+    const { data: existing, error: lookupError } = await supabase.from("companies").select("id").eq("owner_id", user.id).limit(1).maybeSingle();
+    if (lookupError) return { error: lookupError.message };
+    if (existing) redirect("/dashboard");
     const { error } = await supabase.from("companies").insert({
       name, country, base_currency: currency, business_type: businessType, owner_id: user.id
     });
